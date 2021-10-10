@@ -10,7 +10,7 @@ app.config['CELERY_RESULT_BACKEND'] = 'rpc://'
 celery = make_celery(app)
 
 
-@app.route('/count/')
+@app.route('/count', methods=['GET'])
 def process():
     result = count.delay()
     return result.get()
@@ -66,4 +66,4 @@ def count():
     return json.dumps(result)
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(host='0.0.0.0', debug=True)
