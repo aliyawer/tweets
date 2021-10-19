@@ -1,17 +1,24 @@
-from flask import Flask
+from flask import Flask, render_template
 from celery import Celery
 import os
 import json
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='template')
+
 celery = Celery('worker',
-                broker='amqp://admin:admin@rabbit',
+                broker='amqp://admin:admin@rabbit:5672//',
                 backend='rpc://')
 
-@app.route('/count', methods=['GET'])
-def main_process():
-    result = counter.delay()
-    return result.get()
+
+@app.route('/data', methods=['GET'])
+def data():
+    AcyncResult = counter.delay()
+    data = AcyncResult.get()
+    labels = [*data.keys()]
+    values = [*data.values()]
+    json_object = json.dumps(data, indent = 4) 
+    return render_template('index.html', data=json_object , labels=labels, values=values)
+
 
 @celery.task(name='app.count')
 def counter():
@@ -60,8 +67,9 @@ def counter():
         "hen": number_of_hen,
     }
 
-    return json.dumps(result)
+    return result
+
 
 if __name__ == '__main__':
 
-    app.run(host='0.0.0.0' , port=5000 , debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
